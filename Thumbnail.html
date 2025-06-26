@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>YouTube Thumbnail Extractor</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .container:hover {
+      transform: translateY(-5px);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+      font-weight: 700;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 1.1em;
+    }
+
+    .input-group {
+      margin-bottom: 25px;
+      position: relative;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 15px 20px;
+      border: 2px solid #e1e5e9;
+      border-radius: 50px;
+      font-size: 16px;
+      outline: none;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    input[type="text"]:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      transform: scale(1.02);
+    }
+
+    input::placeholder {
+      color: #999;
+      font-style: italic;
+    }
+
+    .btn {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      font-size: 18px;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .result {
+      margin-top: 30px;
+      padding: 20px;
+      background: rgba(240, 245, 255, 0.8);
+      border-radius: 15px;
+      border-left: 4px solid #667eea;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease;
+    }
+
+    .result.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .thumbnail-container {
+      margin: 20px 0;
+    }
+
+    .thumbnail {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .thumbnail:hover {
+      transform: scale(1.05);
+    }
+
+    .thumbnail-url {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      word-break: break-all;
+      margin: 10px 0;
+      border: 1px solid #dee2e6;
+    }
+
+    .copy-btn {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .copy-btn:hover {
+      background: #218838;
+      transform: scale(1.05);
+    }
+
+    .error {
+      color: #dc3545;
+      background: rgba(220, 53, 69, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 4px solid #dc3545;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .quality-options {
+      margin: 15px 0;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .quality-btn {
+      background: rgba(102, 126, 234, 0.1);
+      border: 2px solid #667eea;
+      color: #667eea;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .quality-btn:hover, .quality-btn.active {
+      background: #667eea;
+      color: white;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 30px 20px;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+
+      .quality-options {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📺 Thumbnail Extractor</h1>
+    <p class="subtitle">Extract high-quality thumbnails from YouTube videos</p>
+
+    <div class="input-group">
+      <input type="text" id="videoInput" placeholder="Enter YouTube video URL or Video ID (e.g., Rxo0Upfz48Q)">
+    </div>
+
+    <button class="btn" onclick="getThumbnail()">🔍 Get Thumbnail</button>
+
+    <div class="error" id="errorMessage"></div>
+
+    <div class="result" id="result">
+      <div class="quality-options">
+        <button class="quality-btn active" onclick="changeQuality('0', this)">Default</button>
+        <button class="quality-btn" onclick="changeQuality('hqdefault', this)">HQ</button>
+        <button class="quality-btn" onclick="changeQuality('mqdefault', this)">MQ</button>
+        <button class="quality-btn" onclick="changeQuality('sddefault', this)">SD</button>
+        <button class="quality-btn" onclick="changeQuality('maxresdefault', this)">Max Res</button>
+      </div>
+
+      <div class="thumbnail-container">
+        <img id="thumbnail" class="thumbnail" alt="YouTube Thumbnail">
+      </div>
+
+      <div class="thumbnail-url" id="thumbnailUrl"></div>
+
+      <button class="copy-btn" onclick="copyToClipboard()">📋 Copy URL</button>
+    </div>
+  </div>
+
+  <script>
+    let currentVideoID = '';
+    let currentQuality = '0';
+
+    function extractVideoId(url) {
+      if (/^[a-zA-Z0-9_-]{11}$/.test(url.trim())) {
+        return url.trim();
+      }
+
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/
+      ];
+
+      for (let pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+      }
+
+      return null;
+    }
+
+    function getThumbnail() {
+      const input = document.getElementById('videoInput').value.trim();
+      const errorDiv = document.getElementById('errorMessage');
+      const resultDiv = document.getElementById('result');
+
+      errorDiv.style.display = 'none';
+      resultDiv.classList.remove('visible');
+
+      if (!input) {
+        showError('Please enter a YouTube URL or Video ID');
+        return;
+      }
+
+      const videoID = extractVideoId(input);
+      if (!videoID) {
+        showError('Invalid YouTube URL or Video ID. Please check your input.');
+        return;
+      }
+
+      currentVideoID = videoID;
+      updateThumbnail();
+      resultDiv.classList.add('visible');
+      resultDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function updateThumbnail(activeButton = null) {
+      const url = `https://img.youtube.com/vi/${currentVideoID}/${currentQuality}.jpg`;
+      const img = document.getElementById('thumbnail');
+      img.src = url;
+      img.onload = () => console.log('Thumbnail loaded');
+      img.onerror = () => {
+        img.src = `https://i.ytimg.com/vi/${currentVideoID}/${currentQuality}.jpg`;
+      };
+      document.getElementById('thumbnailUrl').textContent = url;
+
+      // Update active button
+      document.querySelectorAll('.quality-btn').forEach(btn => btn.classList.remove('active'));
+      if (activeButton) {
+        activeButton.classList.add('active');
+      }
+    }
+
+    function changeQuality(quality, button) {
+      currentQuality = quality;
+      updateThumbnail(button);
+    }
+
+    function showError(msg) {
+      const errorDiv = document.getElementById('errorMessage');
+      errorDiv.textContent = msg;
+      errorDiv.style.display = 'block';
+    }
+
+    function copyToClipboard() {
+      const url = document.getElementById('thumbnailUrl').textContent;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        const original = btn.textContent;
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => btn.textContent = original, 2000);
+      });
+    }
+
+    document.getElementById('videoInput').addEventListener('keypress', e => {
+      if (e.key === 'Enter') getThumbnail();
+    });
+
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('videoInput').value = 'dQw4w9WgXcQ';
+        getThumbnail();
+      }, 500);
+    });
+  </script>
+</body>
+</html>
